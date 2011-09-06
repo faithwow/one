@@ -9693,7 +9693,7 @@ bool Unit::CheckAndIncreaseCastCounter()
     return true;
 }
 
-template<typename Elem, typename Node>void Unit::SendMonsterMoveByPath(Path<Elem,Node> const& path, uint32 start, uint32 end, SplineFlags flags, uint32 traveltime){    uint32 pathSize = end - start;    if (pathSize < 1)    {        SendMonsterMove(GetPositionX(), GetPositionY(), GetPositionZ(), SPLINETYPE_STOP, flags, 0);        return;    }    if (pathSize == 1)    {        SendMonsterMove(path[start].x, path[start].y, path[start].z, SPLINETYPE_NORMAL, flags, traveltime);        return;    }    uint32 packSize = (flags & SPLINEFLAG_FLYING) ? pathSize*4*3 : 4*3 + (pathSize-1)*4;    WorldPacket data( SMSG_MONSTER_MOVE, (GetPackGUID().size()+4+4+4+4+1+4+4+4+packSize) );    data << GetPackGUID();    data << GetPositionX();    data << GetPositionY();    data << GetPositionZ();    data << uint32(WorldTimer::getMSTime());    data << uint8(SPLINETYPE_NORMAL);    data << uint32(flags);    data << uint32(traveltime);    data << uint32(pathSize);    if (flags & SPLINEFLAG_FLYING)    {        // sending a taxi flight path        for (uint32 i = start; i < end; ++i)        {            data << float(path[i].x);            data << float(path[i].y);            data << float(path[i].z);        }    }    else    {        // sending a series of points        // destination        data << path[end-1].x;        data << path[end-1].y;        data << path[end-1].z;        // all other points are relative to the center of the path        float mid_X = (GetPositionX() + path[end-1].x) * 0.5f;        float mid_Y = (GetPositionY() + path[end-1].y) * 0.5f;        float mid_Z = (GetPositionZ() + path[end-1].z) * 0.5f;        for (uint32 i = start; i < end - 1; ++i)            data.appendPackXYZ(mid_X - path[i].x, mid_Y - path[i].y, mid_Z - path[i].z);    }    SendMessageToSet(&data, true);}template void Unit::SendMonsterMoveByPath<PathNode>(const Path<PathNode> &, uint32, uint32, SplineFlags, uint32);template void Unit::SendMonsterMoveByPath<TaxiPathNodePtr, const TaxiPathNodeEntry>(const Path<TaxiPathNodePtr, const TaxiPathNodeEntry> &, uint32, uint32, SplineFlags, uint32);SpellAuraHolder* Unit::GetSpellAuraHolder (uint32 spellid) const
+SpellAuraHolder* Unit::GetSpellAuraHolder (uint32 spellid) const
 {
     SpellAuraHolderMap::const_iterator itr = m_spellAuraHolders.find(spellid);
     return itr != m_spellAuraHolders.end() ? itr->second : NULL;
@@ -9708,6 +9708,69 @@ SpellAuraHolder* Unit::GetSpellAuraHolder (uint32 spellid, ObjectGuid casterGuid
 
     return NULL;
 }
+
+template<typename Elem, typename Node>
+void Unit::SendMonsterMoveByPath(Path<Elem,Node> const& path, uint32 start, uint32 end, SplineFlags flags, uint32 traveltime)
+{
+    uint32 pathSize = end - start;
+
+    if (pathSize < 1)
+    {
+        SendMonsterMove(GetPositionX(), GetPositionY(), GetPositionZ(), SPLINETYPE_STOP, flags, 0);
+        return;
+    }
+
+    if (pathSize == 1)
+    {
+        SendMonsterMove(path[start].x, path[start].y, path[start].z, SPLINETYPE_NORMAL, flags, traveltime);
+        return;
+    }
+
+    uint32 packSize = (flags & SPLINEFLAG_FLYING) ? pathSize*4*3 : 4*3 + (pathSize-1)*4;
+    WorldPacket data( SMSG_MONSTER_MOVE, (GetPackGUID().size()+4+4+4+4+1+4+4+4+packSize) );
+    data << GetPackGUID();
+    data << GetPositionX();
+    data << GetPositionY();
+    data << GetPositionZ();
+    data << uint32(WorldTimer::getMSTime());
+    data << uint8(SPLINETYPE_NORMAL);
+    data << uint32(flags);
+    data << uint32(traveltime);
+    data << uint32(pathSize);
+
+    if (flags & SPLINEFLAG_FLYING)
+    {
+        // sending a taxi flight path
+        for (uint32 i = start; i < end; ++i)
+        {
+            data << float(path[i].x);
+            data << float(path[i].y);
+            data << float(path[i].z);
+        }
+    }
+    else
+    {
+        // sending a series of points
+
+        // destination
+        data << path[end-1].x;
+        data << path[end-1].y;
+        data << path[end-1].z;
+
+        // all other points are relative to the center of the path
+        float mid_X = (GetPositionX() + path[end-1].x) * 0.5f;
+        float mid_Y = (GetPositionY() + path[end-1].y) * 0.5f;
+        float mid_Z = (GetPositionZ() + path[end-1].z) * 0.5f;
+
+        for (uint32 i = start; i < end - 1; ++i)
+            data.appendPackXYZ(mid_X - path[i].x, mid_Y - path[i].y, mid_Z - path[i].z);
+    }
+
+    SendMessageToSet(&data, true);
+}
+
+template void Unit::SendMonsterMoveByPath<PathNode>(const Path<PathNode> &, uint32, uint32, SplineFlags, uint32);
+template void Unit::SendMonsterMoveByPath<TaxiPathNodePtr, const TaxiPathNodeEntry>(const Path<TaxiPathNodePtr, const TaxiPathNodeEntry> &, uint32, uint32, SplineFlags, uint32);
 
 bool Unit::IsAllowedDamageInArea(Unit* pVictim) const
 {
