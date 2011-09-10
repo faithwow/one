@@ -50,6 +50,7 @@
 #include <typeinfo>
 #include "Formulas.h"
 #include "GridNotifiersImpl.h"
+#include "CellImpl.h"
 
 #include "TargetedMovementGenerator.h"                      // for HandleNpcUnFollowCommand
 #include "MoveMap.h"                                        // for mmap manager
