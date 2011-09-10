@@ -22,15 +22,15 @@ struct MANGOS_DLL_DECL npc_training_dummyAI : public Scripted_NoMovementAI
 
     void DamageTaken(Unit* pDoneBy, uint32 &uiDamage)
     {
+        m_creature->SetTargetGuid(ObjectGuid());
         combat_timer = 0;
     }
 
     void UpdateAI(const uint32 diff)
     {
+        m_creature->SetTargetGuid(ObjectGuid());
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
-
-        m_creature->SetTargetGuid(ObjectGuid());
 
         m_creature->ModifyHealth(m_creature->GetMaxHealth());
 
