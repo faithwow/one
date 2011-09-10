@@ -367,6 +367,7 @@ extern void AddSC_shadowmoon_valley();
 extern void AddSC_shattrath_city();
 extern void AddSC_terokkar_forest();
 extern void AddSC_zangarmarsh();
+extern void AddSC_npc_training_dummy();
 
 void AddScripts()
 {
@@ -733,4 +734,5 @@ void AddScripts()
     AddSC_shattrath_city();
     AddSC_terokkar_forest();
     AddSC_zangarmarsh();
+    AddSC_npc_training_dummy();
 }
