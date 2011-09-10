@@ -11,13 +11,10 @@ struct MANGOS_DLL_DECL npc_training_dummyAI : public Scripted_NoMovementAI
         Reset();
     }
 
-    void Aggro()
-    {
-
-    }
-
     void Reset()
     {
+        m_creature->addUnitState(UNIT_STAT_STUNNED);
+        m_creature->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_KNOCK_BACK, true);
         combat_timer = 0;
     }
 
@@ -31,9 +28,7 @@ struct MANGOS_DLL_DECL npc_training_dummyAI : public Scripted_NoMovementAI
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
-        m_creature->addUnitState(UNIT_STAT_STUNNED);
-        m_creature->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_KNOCK_BACK, true);
-        m_creature->ModifyHealth(m_creature->GetMaxHealth()/5);
+        m_creature->ModifyHealth(m_creature->GetMaxHealth());
         
         //m_creature->SetTargetGuid(m_creature->GetObjectGuid())
 
