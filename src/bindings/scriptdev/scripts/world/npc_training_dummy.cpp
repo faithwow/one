@@ -1,7 +1,5 @@
 #include "precompiled.h"
 
-#define OUT_OF_COMBAT_TIME 5000
-
 struct MANGOS_DLL_DECL npc_training_dummyAI : public Scripted_NoMovementAI
 {
     uint32 combat_timer;
@@ -20,22 +18,16 @@ struct MANGOS_DLL_DECL npc_training_dummyAI : public Scripted_NoMovementAI
 
     void DamageTaken(Unit* pDoneBy, uint32 &uiDamage)
     {
+        m_creature->ModifyHealth(m_creature->GetMaxHealth()/5);
         combat_timer = 0;
     }
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
-            return;
-
-        m_creature->ModifyHealth(m_creature->GetMaxHealth());
-        
-        //m_creature->SetTargetGuid(m_creature->GetObjectGuid())
-
-        combat_timer += diff;
-        if (combat_timer > OUT_OF_COMBAT_TIME)
+        combat_timer = combat_timer+diff;
+        if (combat_timer > 5000)
         {
-            EnterEvadeMode();
+            ScriptedAI::EnterEvadeMode();
             combat_timer = 0;
         }
     }
