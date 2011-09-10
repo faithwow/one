@@ -11,13 +11,13 @@ struct MANGOS_DLL_DECL npc_training_dummyAI : public Scripted_NoMovementAI
         Reset();
     }
 
-    void Aggro()
+    /*void Aggro()
     {
         DoCastSpellIfCan(m_creature, 23775);
         DoCastSpellIfCan(m_creature, 1908);
-        /*m_creature->CastSpell(m_creature,23775,0);
-        m_creature->CastSpell(m_creature,1908,0);*/
-    }
+        m_creature->CastSpell(m_creature,23775,0);
+        m_creature->CastSpell(m_creature,1908,0);
+    }*/
     void Reset()
     {
         combat_timer = 0;
@@ -25,6 +25,7 @@ struct MANGOS_DLL_DECL npc_training_dummyAI : public Scripted_NoMovementAI
 
     void DamageTaken(Unit* pDoneBy, uint32 &uiDamage)
     {
+        m_creature->addUnitState(UNIT_STAT_STUNNED);
         combat_timer = 0;
     }
 
