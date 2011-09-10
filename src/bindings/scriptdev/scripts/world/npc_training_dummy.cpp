@@ -30,7 +30,7 @@ struct MANGOS_DLL_DECL npc_training_dummyAI : public Scripted_NoMovementAI
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
-        m_creature->SetTargetGuid(m_creature->GetObjectGuid());
+        m_creature->SetTargetGuid(ObjectGuid());
 
         m_creature->ModifyHealth(m_creature->GetMaxHealth());
 
