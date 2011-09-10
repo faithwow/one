@@ -11,14 +11,20 @@ struct MANGOS_DLL_DECL npc_training_dummyAI : public Scripted_NoMovementAI
 
     void Reset()
     {
-        m_creature->addUnitState(UNIT_STAT_STUNNED);
+        m_creature->clearUnitState(UNIT_STAT_STUNNED);
         m_creature->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_KNOCK_BACK, true);
         combat_timer = 0;
     }
 
     void DamageTaken(Unit* pDoneBy, uint32 &uiDamage)
     {
+        m_creature->addUnitState(UNIT_STAT_STUNNED);
         m_creature->ModifyHealth(m_creature->GetMaxHealth()/5);
+        if (uiDamage >= 5000)
+        {
+            const char WoWMessage = ("WoW! %s hit me for %s damage!",pDoneBy->GetName(),uiDamage);
+            m_creature->MonsterYell(WoWMessage,0,0);
+        }
         combat_timer = 0;
     }
 
