@@ -49,6 +49,7 @@
 #include <map>
 #include <typeinfo>
 #include "Formulas.h"
+#include "GridNotifiersImpl.h"
 
 #include "TargetedMovementGenerator.h"                      // for HandleNpcUnFollowCommand
 #include "MoveMap.h"                                        // for mmap manager
@@ -1774,6 +1775,10 @@ bool ChatHandler::HandleNpcMoveCommand(char* args)
             pCreature->Respawn();
         }
     }
+
+    MaNGOS::RespawnDo u_do;
+    MaNGOS::WorldObjectWorker<MaNGOS::RespawnDo> worker(u_do);
+    Cell::VisitGridObjects(m_session->GetPlayer(), worker, m_session->GetPlayer()->GetMap()->GetVisibilityDistance());
 
     WorldDatabase.PExecuteLog("UPDATE creature SET position_x = '%f', position_y = '%f', position_z = '%f', orientation = '%f' WHERE guid = '%u'", x, y, z, o, lowguid);
     PSendSysMessage(LANG_COMMAND_CREATUREMOVED);
