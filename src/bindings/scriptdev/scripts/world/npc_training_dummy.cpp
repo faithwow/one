@@ -5,7 +5,7 @@
 struct MANGOS_DLL_DECL npc_training_dummyAI : public Scripted_NoMovementAI
 {
     uint32 combat_timer;
-    float orientation = m_creature->GetOrientation();
+    float orientation;
 
     npc_training_dummyAI(Creature* pCreature) : Scripted_NoMovementAI(pCreature)
     {
@@ -14,7 +14,7 @@ struct MANGOS_DLL_DECL npc_training_dummyAI : public Scripted_NoMovementAI
 
     void Aggro()
     {
-
+        orientation = m_creature->GetOrientation();
     }
     void Reset()
     {
