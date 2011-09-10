@@ -13,8 +13,9 @@ struct MANGOS_DLL_DECL npc_training_dummyAI : public Scripted_NoMovementAI
 
     void Aggro()
     {
-        m_creature->CastSpell(m_creature,27337,0);
+
     }
+
     void Reset()
     {
         combat_timer = 0;
@@ -30,7 +31,9 @@ struct MANGOS_DLL_DECL npc_training_dummyAI : public Scripted_NoMovementAI
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
-        m_creature->ModifyHealth(m_creature->GetMaxHealth());
+        m_creature->ModifyHealth(m_creature->GetMaxHealth()/5);
+        
+        //m_creature->SetTargetGuid(m_creature->GetObjectGuid())
 
         combat_timer += diff;
         if (combat_timer > OUT_OF_COMBAT_TIME)
