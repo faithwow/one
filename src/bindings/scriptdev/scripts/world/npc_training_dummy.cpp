@@ -34,7 +34,10 @@ struct MANGOS_DLL_DECL npc_training_dummyAI : public Scripted_NoMovementAI
 
         combat_timer += diff;
         if (combat_timer > OUT_OF_COMBAT_TIME)
+        {
             EnterEvadeMode();
+            combat_timer = 0;
+        }
     }
 };
 
