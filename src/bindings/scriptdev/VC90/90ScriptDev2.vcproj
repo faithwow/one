@@ -2904,6 +2904,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\scripts\world\npc_training_dummy.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\scripts\world\npcs_special.cpp"
 					>
 				</File>
