@@ -18,6 +18,8 @@ struct MANGOS_DLL_DECL npc_training_dummyAI : public Scripted_NoMovementAI
 
     void Reset()
     {
+        m_creature->addUnitState(UNIT_STAT_STUNNED);
+        m_creature->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_KNOCK_BACK, true);//imune to knock aways like blast wave
         combat_timer = 0;
     }
 
