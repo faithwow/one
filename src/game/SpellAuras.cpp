@@ -219,7 +219,7 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleAuraModRangedAttackPowerPercent,           //167 SPELL_AURA_MOD_RANGED_ATTACK_POWER_PCT
     &Aura::HandleNoImmediateEffect,                         //168 SPELL_AURA_MOD_DAMAGE_DONE_VERSUS            implemented in Unit::SpellDamageBonusDone, Unit::MeleeDamageBonusDone
     &Aura::HandleNoImmediateEffect,                         //169 SPELL_AURA_MOD_CRIT_PERCENT_VERSUS           implemented in Unit::DealDamageBySchool, Unit::DoAttackDamage, Unit::SpellCriticalBonus
-    &Aura::HandleNULL,                                      //170 SPELL_AURA_DETECT_AMORE       only for Detect Amore spell
+    &Aura::HandleDetectAmore,                               //170 SPELL_AURA_DETECT_AMORE       only for Detect Amore spell
     &Aura::HandleAuraModIncreaseSpeed,                      //171 SPELL_AURA_MOD_SPEED_NOT_STACK
     &Aura::HandleAuraModIncreaseMountedSpeed,               //172 SPELL_AURA_MOD_MOUNTED_SPEED_NOT_STACK
     &Aura::HandleUnused,                                    //173 SPELL_AURA_ALLOW_CHAMPION_SPELLS  only for Proclaim Champion spell
@@ -397,8 +397,6 @@ Unit *caster, Item* castItem) : Aura(spellproto, eff, currentBasePoints, holder,
     {
         case SPELL_EFFECT_APPLY_AREA_AURA_PARTY:
             m_areaAuraType = AREA_AURA_PARTY;
-            if (target->GetTypeId() == TYPEID_UNIT && ((Creature*)target)->IsTotem())
-                m_modifier.m_auraname = SPELL_AURA_NONE;
             break;
         case SPELL_EFFECT_APPLY_AREA_AURA_FRIEND:
             m_areaAuraType = AREA_AURA_FRIEND;
@@ -421,6 +419,10 @@ Unit *caster, Item* castItem) : Aura(spellproto, eff, currentBasePoints, holder,
             MANGOS_ASSERT(false);
             break;
     }
+
+    // totems are immune to any kind of area auras
+    if (target->GetTypeId() == TYPEID_UNIT && ((Creature*)target)->IsTotem())
+        m_modifier.m_auraname = SPELL_AURA_NONE;
 }
 
 AreaAura::~AreaAura()
@@ -1140,14 +1142,46 @@ void Aura::TriggerSpell()
 //                    case 27819: break;
 //                    // Controller Timer
 //                    case 28095: break;
-//                    // Stalagg Chain
-//                    case 28096: break;
-//                    // Stalagg Tesla Passive
-//                    case 28097: break;
-//                    // Feugen Tesla Passive
-//                    case 28109: break;
-//                    // Feugen Chain
-//                    case 28111: break;
+                    // Stalagg Chain and Feugen Chain
+                    case 28096:
+                    case 28111:
+                    {
+                        // X-Chain is casted by Tesla to X, so: caster == Tesla, target = X
+                        Unit* pCaster = GetCaster();
+                        if (pCaster && pCaster->GetTypeId() == TYPEID_UNIT && !pCaster->IsWithinDistInMap(target, 60.0f))
+                        {
+                            pCaster->InterruptNonMeleeSpells(true);
+                            ((Creature*)pCaster)->SetInCombatWithZone();
+                            // Stalagg Tesla Passive or Feugen Tesla Passive
+                            pCaster->CastSpell(pCaster, auraId == 28096 ? 28097 : 28109, true, NULL, NULL, target->GetObjectGuid());
+                        }
+                        return;
+                    }
+                    // Stalagg Tesla Passive and Feugen Tesla Passive
+                    case 28097:
+                    case 28109:
+                    {
+                        // X-Tesla-Passive is casted by Tesla on Tesla with original caster X, so: caster = X, target = Tesla
+                        Unit* pCaster = GetCaster();
+                        if (pCaster && pCaster->GetTypeId() == TYPEID_UNIT)
+                        {
+                            if (pCaster->getVictim() && !pCaster->IsWithinDistInMap(target, 60.0f))
+                            {
+                                if (Unit* pTarget = ((Creature*)pCaster)->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
+                                    target->CastSpell(pTarget, 28099, false);// Shock
+                            }
+                            else
+                            {
+                                // "Evade"
+                                target->RemoveAurasDueToSpell(auraId);
+                                target->DeleteThreatList();
+                                target->CombatStop(true);
+                                // Recast chain (Stalagg Chain or Feugen Chain
+                                target->CastSpell(pCaster, auraId == 28097 ? 28096 : 28111, false);
+                            }
+                        }
+                        return;
+                    }
 //                    // Mark of Didier
 //                    case 28114: break;
 //                    // Communique Timer, camp
@@ -3727,6 +3761,11 @@ void Aura::HandleInvisibilityDetect(bool apply, bool Real)
     }
     if(Real && target->GetTypeId()==TYPEID_PLAYER)
         ((Player*)target)->GetCamera().UpdateVisibilityForOwner();
+}
+
+void Aura::HandleDetectAmore(bool apply, bool /*real*/)
+{
+    GetTarget()->ApplyModByteFlag(PLAYER_FIELD_BYTES2, 1, (PLAYER_FIELD_BYTE2_DETECT_AMORE_0 << m_modifier.m_amount), apply);
 }
 
 void Aura::HandleAuraModRoot(bool apply, bool Real)

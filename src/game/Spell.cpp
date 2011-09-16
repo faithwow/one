@@ -918,7 +918,10 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
     else if (missInfo == SPELL_MISS_REFLECT)                // In case spell reflect from target, do all effect on caster (if hit)
     {
         if (target->reflectResult == SPELL_MISS_NONE)       // If reflected spell hit caster -> do all effect on him
-            DoSpellHitOnUnit(m_caster, mask);
+        {
+            DoSpellHitOnUnit(m_caster, mask, true);
+            unitTarget = m_caster;
+        }
     }
     else if(missInfo == SPELL_MISS_MISS || missInfo == SPELL_MISS_RESIST)
     {
@@ -1054,7 +1057,7 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
         ((Creature*)m_caster)->AI()->SpellHitTarget(unit, m_spellInfo);
 }
 
-void Spell::DoSpellHitOnUnit(Unit *unit, uint32 effectMask)
+void Spell::DoSpellHitOnUnit(Unit *unit, uint32 effectMask, bool isReflected)
 {
     if (!unit || !effectMask)
         return;
@@ -1195,7 +1198,7 @@ void Spell::DoSpellHitOnUnit(Unit *unit, uint32 effectMask)
 
             if (duration > 0)
             {
-                unit->ApplyDiminishingToDuration(m_diminishGroup, duration, m_caster, m_diminishLevel);
+                unit->ApplyDiminishingToDuration(m_diminishGroup, duration, m_caster, m_diminishLevel, isReflected);
 
                 // Fully diminished
                 if (duration == 0)
@@ -1284,7 +1287,8 @@ void Spell::HandleDelayedSpellLaunch(TargetInfo *target)
     // Fill base damage struct (unitTarget - is real spell target)
     SpellNonMeleeDamage damageInfo(caster, unitTarget, m_spellInfo->Id, m_spellSchoolMask);
 
-    if (missInfo == SPELL_MISS_NONE)
+    // keep damage amount for reflected spells
+    if (missInfo == SPELL_MISS_NONE || (missInfo == SPELL_MISS_REFLECT && target->reflectResult == SPELL_MISS_NONE))
     {
         for (int32 effectNumber = 0; effectNumber < MAX_EFFECT_INDEX; ++effectNumber)
         {
@@ -3998,6 +4002,14 @@ SpellCastResult Spell::CheckCast(bool strict)
         if (!m_IsTriggeredSpell && IsDeathOnlySpell(m_spellInfo) && target->isAlive())
             return SPELL_FAILED_TARGET_NOT_DEAD;
 
+        // totem immunity for channeled spells(needs to be before spell cast)
+        // spell attribs for player channeled spells
+        if ((m_spellInfo->AttributesEx & SPELL_ATTR_EX_UNK14)
+            && (m_spellInfo->AttributesEx5 & SPELL_ATTR_EX5_UNK13)
+            && target->GetTypeId() == TYPEID_UNIT
+            && ((Creature*)target)->IsTotem())
+            return SPELL_FAILED_IMMUNE;
+
         bool non_caster_target = target != m_caster && !IsSpellWithCasterSourceTargetsOnly(m_spellInfo);
 
         if(non_caster_target)
@@ -5940,7 +5952,7 @@ bool Spell::CheckTarget( Unit* target, SpellEffectIndex eff )
             // player far away, maybe his corpse near?
             if(target != m_caster && !target->IsWithinLOSInMap(m_caster))
             {
-                if (m_targets.getCorpseTargetGuid())
+                if (!m_targets.getCorpseTargetGuid())
                     return false;
 
                 Corpse *corpse = m_caster->GetMap()->GetCorpse(m_targets.getCorpseTargetGuid());

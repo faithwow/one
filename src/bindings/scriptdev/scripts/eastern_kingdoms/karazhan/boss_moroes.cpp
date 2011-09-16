@@ -259,7 +259,7 @@ struct MANGOS_DLL_DECL boss_moroesAI : public ScriptedAI
                 DoCast(m_creature, SPELL_VANISH);
                 m_bInVanish      = true;
                 m_uiVanish_Timer = 30000;
-                m_uiWait_Timer   = 5000;
+                m_uiWait_Timer   = 12000;
             }
             else
                 m_uiVanish_Timer -= uiDiff;
@@ -274,8 +274,8 @@ struct MANGOS_DLL_DECL boss_moroesAI : public ScriptedAI
                         pTarget->CastSpell(pTarget, SPELL_GARROTE, true);
 
                     //m_creature->setFaction(16);
-                    m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-                    m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                    //m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                    //m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                     m_creature->AI()->AttackStart(m_creature->getVictim());
                     m_bInVanish = false;
                 }
